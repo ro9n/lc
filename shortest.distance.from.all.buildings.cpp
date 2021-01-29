@@ -2,7 +2,7 @@
  * @file shortest.distance.from.all.buildings
  * @author Touhid Alam <taz.touhid@gmail.com>
  *
- * @date Tuesday January 26 2021
+ * @date Wednesday January 27 2021
  *
  * @brief 
  */
@@ -11,18 +11,16 @@
 
 using namespace std;
 
-// WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA WA
-
-typedef pair<int, int> ii;
-typedef pair<int, ii> iii;  // d, (y, x)
-
-#define VACANT   0
+#define LAND     0
 #define BUILDING 1
-#define OBSTACLE 2
+#define WALL     2
 #define ff       first
 #define ss       second
 
-const ii d[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+
+const ii dd[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 const int INF = 1e9 + 7;
 
 class Solution {
@@ -30,55 +28,41 @@ class Solution {
   int shortestDistance(vector<vector<int>>& mat) {
     int n = mat.size(),
         m = mat[0].size(),
-        reachable[n][m],
-        D[n][m],
+        k = LAND,
+        dist[n][m],
         best = INF;
-    vector<queue<iii>> q;
+    vector<ii> buildings;
 
-    memset(reachable, 0x0, sizeof(int) * n * m);
-    memset(D, 0x0, sizeof(int) * n * m);
+    memset(dist, 0x0, sizeof(int) * n * m);
 
-    // O(n*m)
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < m; ++j) {
-        if (mat[i][j] == BUILDING) {
-          queue<iii> tmp;
-          tmp.push({0, ii{i, j}}), q.push_back(tmp);
-        }
+        if (mat[i][j] == BUILDING) buildings.push_back({i, j});
       }
     }
 
-    int N = q.size();
-    int visited[N][n][m];
-    memset(visited, 0x0, sizeof(int) * N * n * m);
+    int N = buildings.size();
 
-    while (1) {
-      for (int j = 0; j < N; ++j) {
-        if (q[j].empty()) return -1;
-        
-        int n1 = q[j].size();
-        
-        for (int i = 0; i < n1; ++i) {
-          iii f = q[j].front(); q[j].pop();
-          int dist = f.ff, y = f.ss.ff, x = f.ss.ss;
+    for (auto building : buildings) {
+      queue<iii> q;
+      q.push({0, building});
 
-          for (int k = 0; k < 4; ++k) {
-            int y1 = y + d[k].ff, x1 = x + d[k].ss;
+      while (!q.empty()) {
+        iii nxt = q.front(); q.pop();
 
-            if (y1 < 0 || y1 >= n || x1 < 0 || x1 >= m || visited[j][y1][x1] || mat[y1][x1] > VACANT) continue;
-            
-            cout << "{" << y1 << "," << x1 << "} " << mat[y1][x1] << ',' << D[y1][x1] << '\t';
-            visited[j][y1][x1] = 1, D[y1][x1] += dist + 1, ++reachable[y1][x1];
+        for (int d = 0; d < 4; ++d) {
+          int y = nxt.ss.ff + dd[d].ff,
+              x = nxt.ss.ss + dd[d].ss;
 
-            if (reachable[y1][x1] == N) {
-              best = min(best, D[y1][x1]);
-            } else {
-              q[j].push({dist + 1, {y1, x1}});
-            }
-          }
+          if (y < 0 || y >= n || x < 0 || x >= m || mat[y][x] != k) continue;
+          --mat[y][x], dist[y][x] += 1 + nxt.ff;
+
+          if (-mat[y][x] == N) best = min(best, dist[y][x]);
+          q.push({nxt.ff + 1, {y, x}});
         }
-
       }
+
+      --k;
     }
 
     return best == INF ? -1 : best;
